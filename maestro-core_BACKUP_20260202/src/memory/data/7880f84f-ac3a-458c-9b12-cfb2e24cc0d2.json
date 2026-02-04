@@ -1,0 +1,43 @@
+{
+  "goal": "criar um app saas para clínica com dashboard",
+  "plan": {
+    "product": "criar um app saas para clínica com dashboard",
+    "domain": "medical",
+    "kind": "app",
+    "stack": [
+      "typescript",
+      "nextjs",
+      "auth",
+      "database"
+    ],
+    "phases": [
+      {
+        "id": "scaffold",
+        "label": "Scaffold do projeto"
+      },
+      {
+        "id": "auth",
+        "label": "Autenticação"
+      },
+      {
+        "id": "database",
+        "label": "Banco de dados"
+      },
+      {
+        "id": "dashboard",
+        "label": "Dashboard"
+      },
+      {
+        "id": "deploy",
+        "label": "Deploy"
+      }
+    ]
+  },
+  "project": {
+    "id": "f0216498-b88b-407a-8352-e8310ae5e4fb",
+    "name": "criar um app saas para clínica com dashboard",
+    "path": "/Users/sandrodainez/maestro-core/maestro-core/src/projects/data/criar-um-app-saas-para-clinica-com-dashboard",
+    "createdAt": "2026-02-01T00:23:07.637Z"
+  },
+  "result": "📦 Pipeline iniciado em /Users/sandrodainez/maestro-core/maestro-core/src/projects/data/criar-um-app-saas-para-clinica-com-dashboard\n\n🚀 Rodando fase: Scaffold do projeto\n🧱 Scaffold criado (0 arquivos iniciais).\n\n🚀 Rodando fase: Autenticação (Supabase)\n🔐 Supabase Auth configurado (1 artefatos criados).\n\n🚀 Rodando fase: Banco de dados (Postgres + Prisma)\n🗄 Prisma + Postgres configurados (3 artefatos criados).\n\n🚀 Rodando fase: Dashboard\n📊 DashboardPhase (stub): dashboard ainda não implementado.\n\n🚀 Rodando fase: Deploy\n🚀 DeployPhase (stub): deploy ainda não implementado.\n\n✅ Todas as fases concluídas."
+}

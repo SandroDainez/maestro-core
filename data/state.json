@@ -1,0 +1,15 @@
+{
+  "maestro": {
+    "mode": "execute",
+    "priorities": []
+  },
+  "tasks": [
+    {
+      "id": "5f0fc6ff-967e-4848-ab39-5b5a7d8e9d96",
+      "title": "Teste audit",
+      "status": "done",
+      "priority": 3
+    }
+  ],
+  "projects": []
+}

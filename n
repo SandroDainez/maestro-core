@@ -1,0 +1,90 @@
+import { ProjectRepository } from "../db/project.repository";
+import { RunRepository } from "../db/run.repository";
+import { PhaseRegistry } from "./phases/PhaseRegistry";
+import { GitManager } from "./git/GitManager";
+import { StateManager, RunState } from "./memory/StateManager";
+
+export class MaestroEngine {
+  private static instance: MaestroEngine;
+
+  private constructor() {}
+
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new MaestroEngine();
+    }
+    return this.instance;
+  }
+
+  async startPipeline(phases: string[]) {
+    const project = await ProjectRepository.getActive();
+    if (!project) throw new Error("Nenhum projeto ativo.");
+
+    const run = await RunRepository.createRun(project.id);
+
+    GitManager.ensureRepo(project.path);
+
+    const branch = GitManager.createRunBranch(
+      project.path,
+      run.id
+    );
+
+    const state: RunState = {
+      id: run.id,
+      startedAt: new Date().toISOString(),
+      phases: phases.map((p) => ({
+        name: p,
+        status: "pending"
+      })),
+      branch
+    };
+
+    StateManager.writeRun(project.path, state);
+
+    for (const phase of phases) {
+      await this.executePhase(
+        project.path,
+        phase,
+        state
+      );
+    }
+
+    state.finishedAt = new Date().toISOString();
+
+    StateManager.writeRun(project.path, state);
+
+    GitManager.tagRun(project.path, run.id);
+  }
+
+  private async executePhase(
+    projectPath: string,
+    phase: string,
+    state: RunState
+  ) {
+    const phaseState = state.phases.find(
+      (p) => p.name === phase
+    );
+
+    if (!phaseState) return;
+
+    phaseState.status = "running";
+    StateManager.writeRun(projectPath, state);
+
+    const executor = PhaseRegistry.get(phase);
+
+    try {
+      await executor.run(projectPath);
+
+      GitManager.commitPhase(projectPath, phase);
+
+      phaseState.status = "success";
+    } catch (err) {
+      phaseState.status = "failed";
+      StateManager.writeRun(projectPath, state);
+      throw err;
+    }
+
+    StateManager.writeRun(projectPath, state);
+  }
+}
+

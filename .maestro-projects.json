@@ -1,0 +1,34 @@
+{
+  "projects": [
+    {
+      "id": "2ad248c1-07f8-4d1b-9b58-47d558adb453",
+      "name": "projeto teste-maestro",
+      "domain": "unknown",
+      "phase": 0,
+      "status": "active",
+      "createdAt": "2026-01-31T07:33:52.370Z",
+      "updatedAt": "2026-01-31T07:33:52.374Z",
+      "phaseCommits": {}
+    },
+    {
+      "id": "2ab2ff6c-6859-4fa6-ab1e-0ef355a33cb9",
+      "name": "projeto teste-maestro",
+      "domain": "unknown",
+      "phase": 8,
+      "status": "active",
+      "createdAt": "2026-01-31T07:34:44.976Z",
+      "updatedAt": "2026-01-31T09:06:45.168Z",
+      "phaseCommits": {
+        "0": "d2ae34a62310faa9ab1313673ebb72afdcd17a77",
+        "2": "5ca126d8d81980993b2d9a96fda7b54471ff5e5a",
+        "3": "af2d10f1b9c50d0b389bef5be9ac69a57a055356",
+        "4": "03e6c667cf8a82183fdd033ceeeecb7e90fbc8ea",
+        "5": "c69e76158821df0eeb72cb0f0fa8ff78ead4c86a",
+        "6": "6fda7985cc55f16a7816fae7725704470bdbf22d",
+        "7": "486c14df5d3f2ce0b8d5e861579ad6868eca0917",
+        "8": "2fba3bfc39d590f58266379700f1e9cf5fb8dfb8"
+      }
+    }
+  ],
+  "activeProjectId": "2ab2ff6c-6859-4fa6-ab1e-0ef355a33cb9"
+}

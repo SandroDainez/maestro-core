@@ -1,0 +1,14 @@
+{"ts":"2026-01-30T12:45:49.239Z","type":"boot","mode":"plan","meta":{"restoredTasks":2}}
+{"ts":"2026-01-30T12:46:05.807Z","type":"mode_changed","mode":"execute","meta":{"from":"plan","to":"execute"}}
+{"ts":"2026-01-30T12:46:05.809Z","type":"task_added","mode":"execute","taskId":"b08c5577-97d5-4228-80bf-c371f0aed921","taskTitle":"Teste audit","priority":3}
+{"ts":"2026-01-30T12:46:05.809Z","type":"task_selected","mode":"execute","taskId":"e7248d5b-4b87-4527-b7fb-cf21585fc4f3","taskTitle":"Persistente 2","priority":5}
+{"ts":"2026-01-30T12:46:05.827Z","type":"approval","mode":"execute","taskId":"e7248d5b-4b87-4527-b7fb-cf21585fc4f3","taskTitle":"Persistente 2","priority":5,"agent":"Maestro-Orchestrator","approved":false}
+{"ts":"2026-01-30T12:46:58.184Z","type":"task_cleared","mode":"execute"}
+{"ts":"2026-01-30T12:47:08.804Z","type":"mode_changed","mode":"execute","meta":{"from":"execute","to":"execute"}}
+{"ts":"2026-01-30T12:47:08.805Z","type":"task_added","mode":"execute","taskId":"5f0fc6ff-967e-4848-ab39-5b5a7d8e9d96","taskTitle":"Teste audit","priority":3}
+{"ts":"2026-01-30T12:47:08.805Z","type":"task_selected","mode":"execute","taskId":"5f0fc6ff-967e-4848-ab39-5b5a7d8e9d96","taskTitle":"Teste audit","priority":3}
+{"ts":"2026-01-30T12:47:15.257Z","type":"approval","mode":"execute","taskId":"5f0fc6ff-967e-4848-ab39-5b5a7d8e9d96","taskTitle":"Teste audit","priority":3,"agent":"Maestro-Orchestrator","approved":true}
+{"ts":"2026-01-30T12:47:15.258Z","type":"task_started","mode":"execute","taskId":"5f0fc6ff-967e-4848-ab39-5b5a7d8e9d96","taskTitle":"Teste audit","priority":3,"agent":"Maestro-Orchestrator"}
+{"ts":"2026-01-30T12:47:17.061Z","type":"task_done","mode":"execute","taskId":"5f0fc6ff-967e-4848-ab39-5b5a7d8e9d96","taskTitle":"Teste audit","priority":3,"agent":"Maestro-Orchestrator"}
+{"ts":"2026-01-30T12:47:17.214Z","type":"no_pending_tasks","mode":"execute"}
+{"ts":"2026-01-30T13:23:21.228Z","type":"boot","mode":"plan"}

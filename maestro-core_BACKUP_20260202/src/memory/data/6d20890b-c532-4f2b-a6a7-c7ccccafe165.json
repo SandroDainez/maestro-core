@@ -1,0 +1,43 @@
+{
+  "goal": "criar um app saas para clínica com dashboard",
+  "plan": {
+    "product": "criar um app saas para clínica com dashboard",
+    "domain": "medical",
+    "kind": "app",
+    "stack": [
+      "typescript",
+      "nextjs",
+      "auth",
+      "database"
+    ],
+    "phases": [
+      {
+        "id": "scaffold",
+        "label": "Scaffold do projeto"
+      },
+      {
+        "id": "auth",
+        "label": "Autenticação"
+      },
+      {
+        "id": "database",
+        "label": "Banco de dados"
+      },
+      {
+        "id": "dashboard",
+        "label": "Dashboard"
+      },
+      {
+        "id": "deploy",
+        "label": "Deploy"
+      }
+    ]
+  },
+  "project": {
+    "id": "b97fc39e-7262-45fd-af86-ac2870192e7a",
+    "name": "criar um app saas para clínica com dashboard",
+    "path": "/Users/sandrodainez/maestro-core/maestro-core/src/projects/data/criar-um-app-saas-para-clinica-com-dashboard",
+    "createdAt": "2026-01-31T20:03:01.873Z"
+  },
+  "result": "📦 Pipeline iniciado em /Users/sandrodainez/maestro-core/maestro-core/src/projects/data/criar-um-app-saas-para-clinica-com-dashboard\n\n🚀 Rodando fase: Scaffold do projeto\n🧱 Scaffold criado (0 arquivos iniciais).\n\n🚀 Rodando fase: Autenticação\n🔐 AuthPhase (stub): autenticação ainda não implementada.\n\n🚀 Rodando fase: Banco de dados\n🗄 DatabasePhase (stub): banco ainda não implementado.\n\n🚀 Rodando fase: Dashboard\n📊 DashboardPhase (stub): dashboard ainda não implementado.\n\n🚀 Rodando fase: Deploy\n🚀 DeployPhase (stub): deploy ainda não implementado.\n\n✅ Todas as fases concluídas."
+}

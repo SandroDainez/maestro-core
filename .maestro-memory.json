@@ -1,0 +1,26 @@
+{
+  "preferences": {
+    "stack": "nextjs"
+  },
+  "decisions": [
+    "2026-01-31T08:18:41.134Z :: Comando: listar projetos",
+    "2026-01-31T08:22:18.314Z :: Comando: mostrar preferencias",
+    "2026-01-31T08:22:59.304Z :: Comando: definir stack nextjs",
+    "2026-01-31T08:23:07.023Z :: Comando: mostrar preferencias",
+    "2026-01-31T08:23:14.355Z :: Comando: mostrar memoria",
+    "2026-01-31T08:26:28.778Z :: Comando: executar fase 2",
+    "2026-01-31T08:26:33.671Z :: Comando: s",
+    "2026-01-31T08:35:50.270Z :: Comando: executar fase 3",
+    "2026-01-31T08:41:39.134Z :: Comando: executar fase 4",
+    "2026-01-31T08:42:14.107Z :: Comando: executar fase 4",
+    "2026-01-31T08:42:20.500Z :: Comando: s",
+    "2026-01-31T08:47:02.389Z :: Comando: executar fase 5",
+    "2026-01-31T08:53:03.047Z :: Comando: executar fase 6",
+    "2026-01-31T09:00:15.298Z :: Comando: executar fase 7",
+    "2026-01-31T09:06:45.103Z :: Comando: executar fase 8",
+    "2026-02-01T09:03:49.736Z :: Comando: run scaffold",
+    "2026-02-01T09:03:49.744Z :: Comando: run auth",
+    "2026-02-01T09:03:49.745Z :: Comando: run database"
+  ],
+  "recentProjects": []
+}

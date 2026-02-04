@@ -1,0 +1,37 @@
+import { MaestroEngine } from "../core/MaestroEngine";
+import { MaestroMode } from "../types";
+
+export class CommandParser {
+  constructor(private maestro: MaestroEngine) {}
+
+  async parse(line: string) {
+    const [cmd, ...rest] = line.trim().split(" ");
+
+    switch (cmd) {
+      case "status":
+        return this.maestro.status();
+
+      case "mode":
+        return this.maestro.setMode(rest[0] as MaestroMode);
+
+      case "add":
+        return this.maestro.addTask(rest.join(" "));
+
+      case "run":
+        return this.maestro.runNext();
+
+      case "projects":
+        return this.maestro.listProjects();
+
+      case "history":
+        return this.maestro.showHistory();
+
+      case "":
+        return;
+
+      default:
+        console.log("❓ Comando não reconhecido:", cmd);
+    }
+  }
+}
+
