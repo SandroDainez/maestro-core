@@ -1,65 +1,26 @@
-// src/cli/CommandParser.ts
-
-import { MaestroEngine } from "../core/MaestroEngine";
+import { runAutopilot } from "./autopilot";
 
 export class CommandParser {
-  private engine = MaestroEngine.getInstance();
+  async parse(argv: string[]) {
+    const [, , command, subcommand, arg] = argv;
 
-  async parse(input: string) {
-    if (!input) return;
-
-    const [cmd, ...args] = input.trim().split(" ");
-
-    switch (cmd) {
-      case "run":
-        await this.engine.startPipeline(args);
-        break;
-
-      case "resume":
-        await this.engine.resumePipeline();
-        break;
-
-      case "retry":
-        if (!args[0]) {
-          console.log("⚠️ Informe a fase. Ex: retry auth");
+    switch (command) {
+      case "autopilot":
+        if (subcommand === "run") {
+          await runAutopilot(arg);
           return;
         }
-        await this.engine.retryPhase(args[0]);
-        break;
 
-      case "status":
-        await this.engine.printStatus();
-        break;
-
-      case "history":
-        await this.engine.printHistory();
-        break;
-
-      case "help":
-        this.printHelp();
-        break;
+        console.log("Uso:");
+        console.log("  maestro autopilot run <path>");
+        return;
 
       default:
-        console.log(`⚠️ Comando desconhecido: ${cmd}`);
+        console.log("❓ Comando desconhecido:", command);
+        console.log("\nComandos disponíveis:");
+        console.log("  maestro autopilot run <path>");
+        return;
     }
-  }
-
-  private printHelp() {
-    console.log(`
-🎼 MAESTRO CLI
-
-PIPELINE:
- run <fases...>        Executa pipeline
- resume               Continua execução incompleta
- retry <fase>         Reexecuta fase específica
-
-INFO:
- status               Status do projeto ativo
- history              Histórico de execuções
-
-OUTROS:
- help                 Mostra comandos
-`);
   }
 }
 
