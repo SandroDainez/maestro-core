@@ -1,40 +1,29 @@
+import path from "node:path";
 import { ProjectScanner } from "./ProjectScanner";
+import { AutoFixEngine, AutoFixResult } from "./AutoFixEngine";
 
-export interface AutopilotResult {
+export type AutopilotRunOptions = {
   projectPath: string;
-  issues: string[];
-  recommendations: string[];
-}
+};
+
+export type AutopilotFixOptions = {
+  projectPath: string;
+  apply?: boolean; // se true -> permite push
+};
 
 export class AutopilotEngine {
-  async run(projectPath: string): Promise<AutopilotResult> {
-    console.log("🤖 Autopilot iniciado...");
-    console.log(`📂 Projeto: ${projectPath}`);
+  private scanner = new ProjectScanner();
+  private fixer = new AutoFixEngine();
 
-    const scanner = new ProjectScanner();
-    const report = await scanner.scan(projectPath);
+  async runDiagnostics(opts: AutopilotRunOptions) {
+    const p = path.resolve(opts.projectPath);
+    return this.scanner.scan(p);
+  }
 
-    const recommendations: string[] = [];
-
-    for (const issue of report.issues) {
-      if (issue.includes("node_modules")) {
-        recommendations.push("Adicionar node_modules ao .gitignore");
-      }
-
-      if (issue.includes(".env")) {
-        recommendations.push("Garantir .env no gitignore e criar .env.example");
-      }
-
-      if (issue.includes("Sem remote")) {
-        recommendations.push("Configurar remote GitHub");
-      }
-    }
-
-    return {
-      projectPath,
-      issues: report.issues,
-      recommendations,
-    };
+  async runAutoFix(opts: AutopilotFixOptions): Promise<AutoFixResult> {
+    const p = path.resolve(opts.projectPath);
+    const dryRun = !opts.apply; // padrão: true
+    return this.fixer.run({ projectPath: p, dryRun });
   }
 }
 

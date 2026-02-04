@@ -1,26 +1,21 @@
 import { runAutopilot } from "./autopilot";
 
-export class CommandParser {
-  async parse(argv: string[]) {
-    const [, , command, subcommand, arg] = argv;
+export async function dispatchCli(argv: string[]) {
+  const [cmd, ...rest] = argv;
 
-    switch (command) {
-      case "autopilot":
-        if (subcommand === "run") {
-          await runAutopilot(arg);
-          return;
-        }
-
-        console.log("Uso:");
-        console.log("  maestro autopilot run <path>");
-        return;
-
-      default:
-        console.log("❓ Comando desconhecido:", command);
-        console.log("\nComandos disponíveis:");
-        console.log("  maestro autopilot run <path>");
-        return;
-    }
+  if (!cmd) {
+    console.log("Uso: maestro <comando> ...");
+    console.log("Comandos: autopilot");
+    process.exit(1);
   }
+
+  if (cmd === "autopilot") {
+    await runAutopilot(rest);
+    return;
+  }
+
+  console.log(`Comando desconhecido: ${cmd}`);
+  console.log("Comandos: autopilot");
+  process.exit(1);
 }
 
