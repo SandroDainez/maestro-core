@@ -1,39 +1,17 @@
 // src/pipelines/JobRunner.ts
 
-import crypto from "crypto";
-import { JobQueue, MaestroJob } from "./JobQueue";
-import { MaestroEngine } from "../core/MaestroEngine";
+import { AutopilotPipeline } from "./AutopilotPipeline";
 
 export class JobRunner {
-  private queue: JobQueue;
-  private engine: MaestroEngine;
-  private polling = false;
+  async runAutopilotScan(projectPath: string) {
+    const pipeline = new AutopilotPipeline(projectPath);
 
-  constructor(queue: JobQueue, engine: MaestroEngine) {
-    this.queue = queue;
-    this.engine = engine;
-  }
+    const result = pipeline.scan();
 
-  start() {
-    if (this.polling) return;
-    this.polling = true;
+    console.log("🔎 Autopilot Scan result:");
+    console.log(JSON.stringify(result, null, 2));
 
-    setInterval(async () => {
-      if (!this.queue.hasCapacity()) return;
-
-      const job = this.queue.dequeue();
-      if (!job) return;
-
-      this.queue.markRunning(job);
-
-      try {
-        await this.engine.runJob(job);
-        this.queue.finish(job.id);
-      } catch (err) {
-        console.error("❌ Job falhou:", err);
-        this.queue.finish(job.id);
-      }
-    }, 500);
+    return result;
   }
 }
 

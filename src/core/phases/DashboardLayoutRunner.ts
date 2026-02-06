@@ -1,62 +1,27 @@
 // src/core/phases/DashboardLayoutRunner.ts
 
-import { MaestroEngine, MaestroAction } from "../MaestroEngine";
+import { MaestroAction, PhaseRisk } from "../../types";
 import { ProjectRegistry } from "../projects/ProjectRegistry";
-import { ShellExecutor } from "../shell/ShellExecutor";
-import { GitRunner } from "../git/GitRunner";
-import * as path from "path";
-import * as fs from "fs";
-
-function toSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-}
+import { FsWriter } from "../fs/FsWriter";
 
 export class DashboardLayoutRunner {
-  private readonly shell: ShellExecutor;
-  private readonly git: GitRunner;
-  private readonly generatedDir: string;
+  constructor(private registry: ProjectRegistry) {}
 
-  constructor(
-    private readonly engine: MaestroEngine,
-    private readonly registry: ProjectRegistry
-  ) {
-    this.generatedDir = path.resolve(process.cwd(), "generated");
-    this.shell = new ShellExecutor(this.generatedDir);
-    this.git = new GitRunner(this.shell);
-  }
-
-  async runPhase7() {
+  getActions(): MaestroAction[] {
     const project = this.registry.getActiveProject();
-    if (!project) throw new Error("Nenhum projeto ativo.");
+    const fsw = new FsWriter(project.rootPath);
 
-    const safeName = toSlug(project.name);
-    const projectDir = path.join(this.generatedDir, safeName);
-
-    const srcDir = fs.existsSync(path.join(projectDir, "src"))
-      ? path.join(projectDir, "src")
-      : projectDir;
-
-    const appDir = fs.existsSync(path.join(srcDir, "app"))
-      ? path.join(srcDir, "app")
-      : path.join(projectDir, "app");
-
-    const dashboardDir = path.join(appDir, "dashboard");
-
-    const actions: MaestroAction[] = [
+    return [
       {
-        name: "Criar layout admin com sidebar e header",
-        risk: "medio",
+        id: "dashboard-layout",
+        name: "Criar layout admin",
+        type: "scaffold",
+        risk: PhaseRisk.MEDIUM,
         execute: async () => {
-          fs.mkdirSync(dashboardDir, { recursive: true });
+          fsw.ensureDir("app/dashboard");
 
-          // layout.tsx
-          fs.writeFileSync(
-            path.join(dashboardDir, "layout.tsx"),
+          fsw.writeIfMissing(
+            "app/dashboard/layout.tsx",
             `
 export default function DashboardLayout({
   children,
@@ -67,6 +32,7 @@ export default function DashboardLayout({
     <div className="flex min-h-screen bg-gray-100">
       <aside className="w-64 bg-black text-white p-6">
         <h2 className="text-xl font-bold mb-6">Admin</h2>
+
         <nav className="space-y-3">
           <a href="/dashboard" className="block hover:underline">
             Dashboard
@@ -93,10 +59,17 @@ export default function DashboardLayout({
 }
 `.trim()
           );
+        },
+      },
 
-          // dashboard home page
-          fs.writeFileSync(
-            path.join(dashboardDir, "page.tsx"),
+      {
+        id: "dashboard-home",
+        name: "Criar home dashboard",
+        type: "scaffold",
+        risk: PhaseRisk.LOW,
+        execute: async () => {
+          fsw.writeIfMissing(
+            "app/dashboard/page.tsx",
             `
 export default function DashboardHome() {
   return (
@@ -123,13 +96,6 @@ export default function DashboardHome() {
         },
       },
     ];
-
-    await this.engine.runPipeline(actions);
-
-    const hash = await this.git.commitPhase(projectDir, 7);
-
-    this.registry.recordPhaseCommit(7, hash);
-    this.registry.updatePhase(7);
   }
 }
 

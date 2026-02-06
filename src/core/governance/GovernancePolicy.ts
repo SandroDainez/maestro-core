@@ -1,38 +1,16 @@
-// src/core/governance/GovernancePolicy.ts
-
-import { MaestroMode, PhaseRisk } from "../../types";
-
-export interface GovernanceAction {
-  description: string;
-  risk: PhaseRisk;
-}
+import { PhaseRisk } from "../../types";
 
 export class GovernancePolicy {
-  static actionsForMode(mode: MaestroMode): GovernanceAction[] {
-    if (mode === "rapid") {
-      return [
-        {
-          description: "Executar alterações diretas sem confirmação",
-          risk: "alto",
-        },
-      ];
+  static getRisksForPhase(name: string) {
+    if (name === "deploy") {
+      return [{ name: "deploy", risk: PhaseRisk.HIGH }];
     }
 
-    if (mode === "execute") {
-      return [
-        {
-          description: "Executar com confirmação humana",
-          risk: "medio",
-        },
-      ];
+    if (name === "database") {
+      return [{ name: "deploy", risk: PhaseRisk.MEDIUM }];
     }
 
-    return [
-      {
-        description: "Somente planejar",
-        risk: "baixo",
-      },
-    ];
+    return [{ name: "scaffold", risk: PhaseRisk.LOW }];
   }
 }
 

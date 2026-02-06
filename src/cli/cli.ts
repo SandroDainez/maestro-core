@@ -1,30 +1,72 @@
-import readline from "readline";
+// src/cli/cli.ts
+
 import { MaestroEngine } from "../core/MaestroEngine";
-import { CommandParser } from "./CommandParser";
+import { MaestroMode } from "../types";
 
-export async function startCLI() {
-  const maestro = new MaestroEngine();
+import { RunRepository } from "../db/run.repository";
 
-  maestro.status();
+const engine = new MaestroEngine();
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+const args = process.argv.slice(2);
 
-  const parser = new CommandParser(maestro);
+async function main() {
+  const cmd = args[0];
+  const target = args[1] ?? ".";
 
-  rl.on("line", async (line) => {
-    const trimmed = line.trim();
+  if (!cmd) {
+    console.log("Uso:");
+    console.log("  scan <path>");
+    console.log("  exec <path>");
+    console.log("  runs");
+    process.exit(1);
+  }
 
-    if (!trimmed) return;
+  try {
+    if (cmd === "scan") {
+      console.log("🔍 Rodando Autopilot Scan...");
+      const output = await engine.autopilotScan(
+        target,
+        MaestroMode.PLAN
+      );
 
-    if (trimmed === "exit") {
-      console.log("👋 Encerrando...");
-      process.exit(0);
+      console.log("✅ Scan finalizado");
+      console.log(`📄 Relatório: ${output.reportMarkdownPath}`);
     }
 
-    await parser.handle(trimmed);
-  });
+    if (cmd === "exec") {
+      console.log("🚀 Rodando Autopilot + Execução...");
+
+      const output = await engine.autopilotScan(
+        target,
+        MaestroMode.EXECUTE
+      );
+
+      await engine.executeJobs(
+        output.project.id,
+        output.jobs
+      );
+
+      console.log("🎉 Execução persistida no banco!");
+    }
+
+    if (cmd === "runs") {
+      const runsRepo = new RunRepository();
+
+      const runs = await runsRepo.list();
+
+      console.log("\n📜 Histórico de execuções:\n");
+
+      for (const run of runs) {
+        console.log(
+          `• ${run.id} | ${run.createdAt.toISOString()} | status=${run.status}`
+        );
+      }
+    }
+  } catch (err) {
+    console.error("💥 Erro fatal:", err);
+    process.exit(1);
+  }
 }
+
+main();
 

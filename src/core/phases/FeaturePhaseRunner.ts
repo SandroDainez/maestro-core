@@ -1,71 +1,59 @@
 // src/core/phases/FeaturePhaseRunner.ts
 
-import { MaestroEngine, MaestroAction } from "../MaestroEngine";
-import { ProjectRegistry } from "../projects/ProjectRegistry";
-import { ShellExecutor } from "../shell/ShellExecutor";
-import { GitRunner } from "../git/GitRunner";
-import * as path from "path";
-import * as fs from "fs";
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
 
-function toSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-}
+import { MaestroAction, PhaseRisk } from "../../types";
+import { ProjectRegistry } from "../projects/ProjectRegistry";
 
 export class FeaturePhaseRunner {
-  private readonly shell: ShellExecutor;
-  private readonly git: GitRunner;
-  private readonly generatedDir: string;
+  constructor(private registry: ProjectRegistry) {}
 
-  constructor(
-    private readonly engine: MaestroEngine,
-    private readonly registry: ProjectRegistry
-  ) {
-    this.generatedDir = path.resolve(process.cwd(), "generated");
-    this.shell = new ShellExecutor(this.generatedDir);
-    this.git = new GitRunner(this.shell);
-  }
+  getActions(): MaestroAction[] {
+    const projectPath = this.registry.getActiveProject().rootPath;
 
-  async runPhase2() {
-    const project = this.registry.getActiveProject();
-    if (!project) throw new Error("Nenhum projeto ativo.");
-
-    const safeName = toSlug(project.name);
-    const projectDir = path.join(this.generatedDir, safeName);
-
-    const actions: MaestroAction[] = [
+    return [
       {
+        id: "feature-prisma-install",
         name: "Instalar Prisma",
-        risk: "alto",
+        type: "install",
+        risk: PhaseRisk.HIGH,
         execute: async () => {
           console.log("📦 Instalando Prisma...");
 
-          await this.shell.run(
-            "npm",
-            ["install", "prisma", "@prisma/client"],
-            { cwd: projectDir }
-          );
-
-          await this.shell.run("npx", ["prisma", "init"], {
-            cwd: projectDir,
+          execSync("npm install prisma @prisma/client", {
+            cwd: projectPath,
+            stdio: "inherit",
           });
+
+          if (!fs.existsSync(path.join(projectPath, "prisma"))) {
+            execSync("npx prisma init", {
+              cwd: projectPath,
+              stdio: "inherit",
+            });
+          }
         },
       },
-      {
-        name: "Criar schema base",
-        risk: "medio",
-        execute: async () => {
-          const schemaPath = path.join(
-            projectDir,
-            "prisma",
-            "schema.prisma"
-          );
 
-          const baseSchema = `
+      {
+        id: "feature-prisma-schema",
+        name: "Criar schema base",
+        type: "scaffold",
+        risk: PhaseRisk.MEDIUM,
+        execute: async () => {
+          const prismaDir = path.join(projectPath, "prisma");
+
+          fs.mkdirSync(prismaDir, { recursive: true });
+
+          const schemaPath = path.join(prismaDir, "schema.prisma");
+
+          if (fs.existsSync(schemaPath)) {
+            console.log("⏭️  skip (exists) prisma/schema.prisma");
+            return;
+          }
+
+          const schema = `
 generator client {
   provider = "prisma-client-js"
 }
@@ -82,36 +70,36 @@ model User {
   role      String
   createdAt DateTime @default(now())
 }
-`;
+`.trim();
 
-          fs.writeFileSync(schemaPath, baseSchema.trim());
-          console.log("🧱 schema.prisma criado.");
+          fs.writeFileSync(schemaPath, schema);
+
+          console.log("📝 write prisma/schema.prisma");
         },
       },
+
       {
+        id: "feature-env",
         name: "Criar .env.example",
-        risk: "baixo",
+        type: "config",
+        risk: PhaseRisk.LOW,
         execute: async () => {
-          const envExample = `
-DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
-`;
+          const envPath = path.join(projectPath, ".env.example");
+
+          if (fs.existsSync(envPath)) {
+            console.log("⏭️  skip (exists) .env.example");
+            return;
+          }
 
           fs.writeFileSync(
-            path.join(projectDir, ".env.example"),
-            envExample.trim()
+            envPath,
+            `DATABASE_URL="postgresql://user:password@localhost:5432/dbname"`
           );
 
-          console.log("📄 .env.example criado.");
+          console.log("📝 write .env.example");
         },
       },
     ];
-
-    await this.engine.runPipeline(actions);
-
-    const hash = await this.git.commitPhase(projectDir, 2);
-
-    this.registry.recordPhaseCommit(2, hash);
-    this.registry.updatePhase(2);
   }
 }
 

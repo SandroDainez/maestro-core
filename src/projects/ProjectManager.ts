@@ -7,11 +7,11 @@ export class ProjectManager {
     this.projects.push(project);
   }
 
-  list(): MaestroProject[] {
+  list() {
     return this.projects;
   }
 
-  getById(id: string): MaestroProject | undefined {
+  getById(id: string) {
     return this.projects.find((p) => p.id === id);
   }
 }

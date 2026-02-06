@@ -7,37 +7,38 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ProjectStatus {
-  created
-  active
-  archived
-}
-
 enum RunStatus {
   queued
   running
   success
   failed
-  cancelled
+}
+
+enum PhaseStatus {
+  queued
+  running
+  success
+  failed
 }
 
 model Tenant {
-  id        String   @id @default(uuid())
-  slug      String   @unique
-  name      String
-  createdAt DateTime @default(now())
-
-  projects Project[]
+  id        String    @id @default(uuid())
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  projects  Project[]
 }
 
 model Project {
-  id        String        @id @default(uuid())
+  id        String   @id @default(uuid())
+  tenantId String
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+
   slug      String
   name      String
   path      String
-  status    ProjectStatus @default(created)
-  tenantId String
-  tenant   Tenant         @relation(fields: [tenantId], references: [id])
+  status    String   @default("active")
+
+  createdAt DateTime @default(now())
 
   runs PipelineRun[]
 
@@ -50,27 +51,31 @@ model PipelineRun {
   project   Project @relation(fields: [projectId], references: [id])
 
   status    RunStatus @default(queued)
+
   startedAt DateTime?
   endedAt   DateTime?
 
-  phases PipelinePhaseRun[]
-
   createdAt DateTime @default(now())
+
+  phases PipelinePhaseRun[]
 }
 
 model PipelinePhaseRun {
-  id      String   @id @default(uuid())
-  runId  String
-  run    PipelineRun @relation(fields: [runId], references: [id])
+  id        String   @id @default(uuid())
 
-  name   String
-  status RunStatus @default(queued)
+  runId String
+  run   PipelineRun @relation(fields: [runId], references: [id])
+
+  phase  String
+  status PhaseStatus
+
+  logs String?
 
   startedAt DateTime?
   endedAt   DateTime?
 
-  logs String?
-
   createdAt DateTime @default(now())
+
+  @@index([runId])
 }
 

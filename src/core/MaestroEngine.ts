@@ -1,251 +1,125 @@
 // src/core/MaestroEngine.ts
 
-import { PhaseRegistry } from "./phases/PhaseRegistry";
-import { registerPhases } from "./phases/registerPhases";
+import path from "path";
 
-import { RunRepository } from "../db/run.repository";
+import {
+  MaestroJob,
+  AutopilotScanOutput,
+  MaestroMode,
+  MaestroProject,
+} from "../types";
+
+import { ensureDir } from "../utils/fsx";
+
+import { AutopilotScanner } from "../autopilot/AutopilotScanner";
+import { RiskEngine } from "../autopilot/RiskEngine";
+import { ReportGenerator } from "../autopilot/ReportGenerator";
+import { RiskGate } from "../autopilot/RiskGate";
+import { PreviewEngine } from "../autopilot/PreviewEngine";
+
+import { SaaSPlanner } from "./planner/SaaSPlanner";
+import { TaskQueue } from "../pipelines/TaskQueue";
+import { ProjectRegistry } from "./projects/ProjectRegistry";
+
+import { TenantRepository } from "../db/tenant.repository";
 import { ProjectRepository } from "../db/project.repository";
-
-import { GitManager } from "./git/GitManager";
-import { StateManager, RunState } from "./state/StateManager";
-
-import { MaestroContext, MaestroProject } from "../types";
+import { RunRepository } from "../db/repositories/run.repo";
+import { PhaseRunRepository } from "../db/phase-run.repository";
 
 export class MaestroEngine {
-  private static instance: MaestroEngine;
+  private registry = new ProjectRegistry();
+  private queue = new TaskQueue();
 
-  static getInstance() {
-    if (!this.instance) {
-      this.instance = new MaestroEngine();
-    }
-    return this.instance;
-  }
+  private tenantRepo = new TenantRepository();
+  private projectRepo = new ProjectRepository();
+  private runRepo = new RunRepository();
+  private phaseRunRepo = new PhaseRunRepository();
 
-  private constructor() {
-    registerPhases();
-  }
+  private scanner = new AutopilotScanner();
+  private riskEngine = new RiskEngine();
+  private reporter = new ReportGenerator();
+  private planner = new SaaSPlanner(this.registry);
 
-  // ==================================================
-  // LOAD PROJECT
-  // ==================================================
-  private async loadProject(): Promise<MaestroProject> {
-    // 👉 método REAL do seu repository
-    const dbProject = await ProjectRepository.getActive();
+  private gate = new RiskGate();
+  private preview = new PreviewEngine();
 
-    if (!dbProject) {
-      throw new Error("Nenhum projeto ativo encontrado.");
-    }
+  // ======================================
+  // AUTOPILOT SCAN
+  // ======================================
 
-    return {
+  async autopilotScan(
+    projectPath: string,
+    mode: MaestroMode = MaestroMode.PLAN
+  ): Promise<AutopilotScanOutput> {
+    const tenant = await this.tenantRepo.ensureDefaultTenant();
+
+    const dbProject = await this.projectRepo.upsertByPath(tenant.id, projectPath);
+
+    const project: MaestroProject = {
       id: dbProject.id,
       name: dbProject.name,
-      slug: dbProject.slug,
-      rootDir: dbProject.path,
-      currentPhase: 0,
-      commits: [],
-    };
-  }
-
-  // ==================================================
-  // START PIPELINE
-  // ==================================================
-  async startPipeline(phases: string[]) {
-    const project = await this.loadProject();
-
-    const run = await RunRepository.create(project.id, phases);
-
-    await RunRepository.startRun(run.id);
-
-    const branch = `run/${run.id}`;
-
-    GitManager.createRunBranch(project.rootDir, run.id);
-
-    const state: RunState = {
-      id: run.id,
-      projectId: project.id,
-      branch,
-      phases,
-      currentPhase: 0,
-      createdAt: new Date().toISOString(),
-      finishedAt: null,
+      rootPath: dbProject.path,
+      currentPhase: "scan",
+      createdAt: dbProject.createdAt,
     };
 
-    StateManager.writeRun(project.rootDir, state);
+    // ✅ REGISTRA e define ativo (método espera string)
+    this.registry.registerProject(project);
+    this.registry.setActiveProject(project.id);
 
-    await this.executePhases(project, state, "run");
+    const scan = this.scanner.scan(projectPath);
+    const risks = this.riskEngine.evaluate(scan);
+    const jobs: MaestroJob[] = this.planner.plan(scan, risks);
+
+    const runId = `run-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    const runDir = path.join(projectPath, "maestro-runs", runId);
+    ensureDir(runDir);
+
+    const previews = await this.preview.generate();
+
+    const output: AutopilotScanOutput = {
+      project,
+      scan,
+      risks,
+      jobs,
+      runId,
+      runDir,
+      previews,
+      reportMarkdownPath: path.join(runDir, "plan.md"),
+      reportJsonPath: path.join(runDir, "run.json"),
+    };
+
+    const { mdPath, jsonPath } = this.reporter.write(runDir, output);
+    output.reportMarkdownPath = mdPath;
+    output.reportJsonPath = jsonPath;
+
+    if (mode === MaestroMode.EXECUTE && !this.gate.allowExecution(risks)) {
+      throw new Error("🚫 Execução bloqueada: risco HIGH detectado.");
+    }
+
+    return output;
   }
 
-  // ==================================================
-  // RESUME
-  // ==================================================
-  async resumePipeline() {
-    const project = await this.loadProject();
+  // ======================================
+  // EXECUTAR JOBS
+  // ======================================
 
-    const state = StateManager.readRun(project.rootDir);
+  async executeJobs(projectId: string, jobs: MaestroJob[]) {
+    const run = await this.runRepo.create(projectId);
 
-    if (!state) {
-      console.log("ℹ️ Nenhum run pendente.");
-      return;
+    for (const job of jobs) {
+      console.log(`▶️ Executando fase: ${job.phase}`);
+
+      const phaseRun = await this.phaseRunRepo.create(run.id, job.phase);
+
+      await this.queue.run(job.tasks);
+
+      await this.phaseRunRepo.finish(phaseRun.id, "success");
     }
 
-    // 👉 método correto
-    GitManager.checkout(project.rootDir, state.branch);
+    await this.runRepo.finish(run.id, "success");
 
-    await RunRepository.resetRun(state.id);
-
-    await this.executePhases(project, state, "resume");
-  }
-
-  // ==================================================
-  // RETRY PHASE
-  // ==================================================
-  async retryPhase(phase: string) {
-    const project = await this.loadProject();
-
-    const state = StateManager.readRun(project.rootDir);
-
-    if (!state) {
-      console.log("ℹ️ Nenhum run ativo.");
-      return;
-    }
-
-    const idx = state.phases.indexOf(phase);
-
-    if (idx === -1) {
-      console.log(`⚠️ Fase não encontrada: ${phase}`);
-      return;
-    }
-
-    state.currentPhase = idx;
-
-    StateManager.writeRun(project.rootDir, state);
-
-    GitManager.checkout(project.rootDir, state.branch);
-
-    await RunRepository.resetPhase(state.id, phase);
-
-    await this.executePhases(project, state, "retry");
-  }
-
-  // ==================================================
-  // CORE EXECUTOR
-  // ==================================================
-  private async executePhases(
-    project: MaestroProject,
-    state: RunState,
-    mode: "run" | "resume" | "retry"
-  ) {
-    for (let i = state.currentPhase; i < state.phases.length; i++) {
-      const name = state.phases[i];
-
-      const phase = PhaseRegistry.get(name);
-
-      if (!phase) {
-        console.log(`❌ Fase não registrada: ${name}`);
-        await RunRepository.finishRun(state.id, "failed");
-        return;
-      }
-
-      console.log(`▶️ Executando fase: ${name}`);
-
-      state.currentPhase = i;
-      StateManager.writeRun(project.rootDir, state);
-
-      await RunRepository.startPhase(state.id, name);
-
-      const ctx: MaestroContext = {
-        runId: state.id,
-        mode,
-      };
-
-      try {
-        const result = await phase.run(project, ctx, mode);
-
-        if (!result.success) {
-          console.log(`❌ Falha: ${result.message ?? name}`);
-
-          await RunRepository.finishPhase(
-            state.id,
-            name,
-            "failed",
-            result.message
-          );
-
-          await RunRepository.finishRun(state.id, "failed");
-          return;
-        }
-
-        await RunRepository.finishPhase(state.id, name, "success");
-
-      } catch (err: any) {
-        console.error(`💥 Erro na fase ${name}:`, err.message);
-
-        await RunRepository.finishPhase(
-          state.id,
-          name,
-          "failed",
-          err.message
-        );
-
-        await RunRepository.finishRun(state.id, "failed");
-        return;
-      }
-    }
-
-    state.finishedAt = new Date().toISOString();
-    StateManager.writeRun(project.rootDir, state);
-
-    StateManager.clear(project.rootDir);
-
-    await RunRepository.finishRun(state.id, "success");
-
-    console.log("✅ Pipeline finalizado.");
-  }
-
-  // ==================================================
-  // STATUS
-  // ==================================================
-  async printStatus() {
-    const project = await this.loadProject();
-
-    const latest = await RunRepository.latestRun(project.id);
-
-    if (!latest) {
-      console.log("ℹ️ Nenhum run encontrado.");
-      return;
-    }
-
-    console.log(`📦 Projeto: ${project.name}`);
-    console.log(`🆔 Último run: ${latest.id}`);
-    console.log(`📊 Status: ${latest.status}`);
-
-    for (const phase of latest.phases) {
-      console.log(` • ${phase.name} — ${phase.status}`);
-    }
-  }
-
-  // ==================================================
-  // HISTORY
-  // ==================================================
-  async printHistory() {
-    const project = await this.loadProject();
-
-    const runs = await RunRepository.runsForProject(project.id);
-
-    if (!runs.length) {
-      console.log("ℹ️ Nenhum histórico.");
-      return;
-    }
-
-    console.log("📜 Histórico:");
-
-    for (const run of runs) {
-      console.log(`Run ${run.id} — ${run.status}`);
-
-      for (const phase of run.phases) {
-        console.log(`   • ${phase.name} — ${phase.status}`);
-      }
-    }
+    return run.id;
   }
 }
 
