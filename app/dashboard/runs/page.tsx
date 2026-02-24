@@ -3,8 +3,8 @@ import Link from "next/link";
 type Run = {
   id: string;
   status: string;
-  createdAt?: string;
-  endedAt?: string | null;
+  startedAt?: string;
+  finishedAt?: string | null;
   project?: {
     name?: string | null;
   } | null;
@@ -62,7 +62,6 @@ export default async function RunsPage() {
 
   return (
     <div className="space-y-10">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Pipeline Runs</h1>
@@ -79,7 +78,6 @@ export default async function RunsPage() {
         </Link>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <Stat title="Total" value={total} />
         <Stat title="Success" value={success} />
@@ -87,7 +85,6 @@ export default async function RunsPage() {
         <Stat title="Running" value={running} />
       </div>
 
-      {/* Table */}
       <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
         <div className="border-b px-6 py-4 text-sm font-medium">
           Execuções
@@ -126,14 +123,14 @@ export default async function RunsPage() {
                   </td>
 
                   <td className="px-6 py-4">
-                    {run.createdAt
-                      ? new Date(run.createdAt).toLocaleString()
+                    {run.startedAt
+                      ? new Date(run.startedAt).toLocaleString()
                       : "—"}
                   </td>
 
                   <td className="px-6 py-4">
-                    {run.endedAt
-                      ? new Date(run.endedAt).toLocaleString()
+                    {run.finishedAt
+                      ? new Date(run.finishedAt).toLocaleString()
                       : "—"}
                   </td>
 
@@ -155,20 +152,11 @@ export default async function RunsPage() {
   );
 }
 
-function Stat({
-  title,
-  value,
-}: {
-  title: string;
-  value: number;
-}) {
+function Stat({ title, value }: { title: string; value: number }) {
   return (
     <div className="rounded-xl border bg-white p-5 shadow-sm">
-      <div className="text-xs uppercase text-gray-500">
-        {title}
-      </div>
+      <div className="text-xs uppercase text-gray-500">{title}</div>
       <div className="mt-2 text-3xl font-bold">{value}</div>
     </div>
   );
 }
-

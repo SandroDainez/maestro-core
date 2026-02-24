@@ -1,12 +1,12 @@
-// app/api/runs/route.ts
-
+import { prisma } from "../../../src/lib/prisma";
 import { NextResponse } from "next/server";
-import { prisma } from "../../../src/db/prisma";
 
 export async function GET() {
   try {
     const runs = await prisma.pipelineRun.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: {
+        startedAt: "desc", // 🔥 corrigido aqui
+      },
       take: 50,
       include: {
         project: true,
@@ -14,13 +14,11 @@ export async function GET() {
     });
 
     return NextResponse.json(runs);
-  } catch (err) {
-    console.error("Erro listando runs:", err);
-
+  } catch (error) {
+    console.error("Erro listando runs:", error);
     return NextResponse.json(
       { error: "Erro ao buscar execuções" },
       { status: 500 }
     );
   }
 }
-
