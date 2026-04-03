@@ -2,7 +2,8 @@ import { apiError, apiOk } from "@/src/lib/api";
 import { authorizeAdmin } from "@/src/lib/admin";
 import { OperationalAnalyticsService } from "@/src/core/platform/OperationalAnalyticsService";
 
-const service = new OperationalAnalyticsService();
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function toCsvRows(analytics: Awaited<ReturnType<OperationalAnalyticsService["getSummary"]>>) {
   const header = ["day", "runs", "reviews", "approvalBlocks", "specializedRuns"];
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
   const format = url.searchParams.get("format") ?? "json";
 
   try {
+    const service = new OperationalAnalyticsService();
     const analytics = await service.getSummary({ type, limit, days, runner, guard });
     if (format === "csv") {
       const csv = toCsvRows(analytics);
