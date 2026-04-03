@@ -1,6 +1,9 @@
 import { prisma } from "../../../src/lib/prisma";
 import { apiError, apiOk } from "@/src/lib/api";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const type = url.searchParams.get("type") ?? undefined;
