@@ -106,7 +106,7 @@ export default function Home() {
         </p>
 
         <div style={{ display: "grid", gap: 12 }}>
-        <textarea
+          <textarea
           value={objective}
           onChange={(event) => setObjective(event.target.value)}
           placeholder="Ex: Encontre 3 produtos de academia como afiliado e gere copy"
@@ -118,6 +118,9 @@ export default function Home() {
             border: "1px solid #ccc",
             borderRadius: 8,
             resize: "vertical",
+            background: "#f8fafc",
+            color: "#020617",
+            boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.05)",
           }}
         />
 

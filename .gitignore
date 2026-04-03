@@ -54,3 +54,5 @@ maestro-core_BACKUP_20260202/
 # ================================
 docker-data/
 
+.vercel
+.env*.local
