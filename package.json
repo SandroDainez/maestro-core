@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsc && next build",
+    "build": "prisma generate && tsc && next build",
     "start": "next start",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\",\"moduleResolution\":\"node\"}' node --test tests/human-request-parser.test.cjs tests/rbac.test.cjs tests/http-handlers.test.cjs tests/platform-readiness.test.cjs tests/platform-analytics.test.cjs tests/memory-informed-planning.test.cjs tests/multi-agent-review.test.cjs tests/task-queue.test.cjs tests/phase-dispatcher.test.cjs tests/planner-output-parser.test.cjs tests/openai-planner-model.test.cjs tests/execution-plan-compiler.test.cjs tests/execution-runtime.test.cjs tests/semantic-memory.test.cjs tests/evaluation.test.cjs tests/evaluation-feedback.test.cjs tests/tool-safety.test.cjs",
     "setup-db": "./scripts/setup_db.sh",
