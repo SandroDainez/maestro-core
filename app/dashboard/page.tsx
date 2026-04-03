@@ -2,6 +2,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/src/lib/prisma";
 import { OperationalAnalyticsService } from "@/src/core/platform/OperationalAnalyticsService";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const analyticsService = new OperationalAnalyticsService();
   const [latestRun, userCount, projectCount, recentDeletions, runStats, activeAdmins, recentRuns] = await Promise.all([

@@ -1,5 +1,7 @@
 import { prisma } from "@/src/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function SettingsPage() {
   const [tenantCount, userCount, projectCount] = await Promise.all([
     prisma.tenant.count(),

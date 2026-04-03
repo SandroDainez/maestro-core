@@ -538,6 +538,7 @@ export class ExecutionRuntime {
     retryLimit: number;
     completedResults: Map<string, AgentExecutionResult>;
     directive?: PhaseExecutionDirective;
+    options?: ExecutionRuntimeOptions;
   }) {
     const { step } = input;
     const phaseRun = await this.phaseRunRepo.create(

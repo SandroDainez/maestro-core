@@ -93,7 +93,10 @@ export class PlanningService {
       },
     };
     const evaluation = selected.evaluation;
-    const planId = String(plan.metadata.planId ?? "");
+    const planId =
+      plan.metadata && "planId" in plan.metadata
+        ? String(plan.metadata.planId ?? "")
+        : "";
 
     this.log("planning_candidates_generated", {
       candidateCount: candidates.length,
