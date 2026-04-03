@@ -5,10 +5,6 @@ import bcrypt from "bcrypt";
 import { prisma } from "./prisma";
 import { normalizeRole } from "./rbac";
 
-if (!process.env.NEXTAUTH_SECRET) {
-  throw new Error("NEXTAUTH_SECRET não definido no .env");
-}
-
 export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   session: {
