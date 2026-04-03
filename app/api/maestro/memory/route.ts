@@ -3,6 +3,9 @@ import { MaestroOrchestrator } from "@/src/core/orchestration/MaestroOrchestrato
 import { apiError, apiOk } from "@/src/lib/api";
 import { authorizeAdmin } from "@/src/lib/admin";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const BodySchema = z.object({
   key: z.enum([
     "preferredStack",
@@ -13,12 +16,11 @@ const BodySchema = z.object({
   value: z.union([z.string(), z.boolean()]),
 });
 
-const orchestrator = new MaestroOrchestrator();
-
 export async function GET() {
   const auth = await authorizeAdmin();
   if (!auth.ok) return auth.response;
 
+  const orchestrator = new MaestroOrchestrator();
   return apiOk({ memory: orchestrator.getMemorySnapshot() });
 }
 
@@ -33,6 +35,7 @@ export async function POST(req: Request) {
     return apiError("Payload invalido para memoria.", 400);
   }
 
+  const orchestrator = new MaestroOrchestrator();
   orchestrator.updateMemoryPreference(parsed.data.key, parsed.data.value);
   return apiOk({ memory: orchestrator.getMemorySnapshot() });
 }

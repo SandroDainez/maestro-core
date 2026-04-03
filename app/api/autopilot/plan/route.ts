@@ -2,11 +2,12 @@ import { z } from "zod";
 import { MaestroOrchestrator } from "@/src/core/orchestration/MaestroOrchestrator";
 import { apiError, apiOk } from "@/src/lib/api";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const BodySchema = z.object({
   path: z.string().min(1),
 });
-
-const orchestrator = new MaestroOrchestrator();
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
     return apiError("Invalid body", 400);
   }
 
+  const orchestrator = new MaestroOrchestrator();
   const result = await orchestrator.planProject(parsed.data.path);
   return apiOk({ result });
 }
