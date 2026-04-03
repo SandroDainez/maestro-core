@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { AgentExecutor } from "@/src/agents/AgentExecutor";
 
-const executor = new AgentExecutor();
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    const executor = new AgentExecutor();
     const result = await executor.execute(body.objective, body.context);
     return NextResponse.json({ ok: true, ...result });
   } catch (error: any) {
