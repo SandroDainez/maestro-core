@@ -1,25 +1,26 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
-import { scanProject } from "@/src/lib/scan/scanProject";
-import { generateTechnicalReport } from "@/src/lib/analysis/generateReport";
+import { MaestroOrchestrator } from "@/src/core/orchestration/MaestroOrchestrator";
+import { apiError, apiOk } from "@/src/lib/api";
 
 const BodySchema = z.object({
-  path: z.string()
+  path: z.string().min(1),
+  objective: z.string().optional(),
 });
+
+const orchestrator = new MaestroOrchestrator();
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = BodySchema.safeParse(body);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    return apiError("Invalid body", 400);
   }
 
-  const scan = await scanProject(parsed.data.path);
-  const report = generateTechnicalReport(scan);
+  const result = await orchestrator.reportProject(
+    parsed.data.path,
+    parsed.data.objective
+  );
 
-  return NextResponse.json({
-    scan,
-    report
-  });
+  return apiOk({ result });
 }

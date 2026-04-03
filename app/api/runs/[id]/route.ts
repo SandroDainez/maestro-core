@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
-
 import { prisma } from "../../../../src/db/prisma";
+import { apiError, apiOk } from "@/src/lib/api";
 
 export async function GET(
   _req: Request,
@@ -13,25 +12,20 @@ export async function GET(
       },
       include: {
         project: true,
-        phases: true, // 👈 nome real no Prisma
+        phaseRuns: {
+          orderBy: { startedAt: "asc" },
+        },
       },
     });
 
     if (!run) {
-      return NextResponse.json(
-        { error: "Execução não encontrada" },
-        { status: 404 }
-      );
+      return apiError("Execução não encontrada", 404);
     }
 
-    return NextResponse.json(run);
+    return apiOk({ run });
   } catch (err) {
     console.error("RUN DETAILS ERROR:", err);
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiError("Internal server error", 500);
   }
 }
-

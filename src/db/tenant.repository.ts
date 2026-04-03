@@ -9,8 +9,8 @@ export class TenantRepository {
       update: {},
       create: {
         slug,
+        name: "Default",
       },
     });
   }
 }
-

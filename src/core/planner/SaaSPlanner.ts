@@ -7,6 +7,7 @@ import {
   AutopilotScanResult,
   AutopilotRisk,
   TaskStatus,
+  PhaseRisk,
 } from "../../types";
 
 import { FeaturePhaseRunner } from "../phases/FeaturePhaseRunner";
@@ -18,6 +19,13 @@ import { DashboardLayoutRunner } from "../phases/DashboardLayoutRunner";
 import { PhaseRunner } from "../phases/PhaseRunner";
 
 import { ProjectRegistry } from "../projects/ProjectRegistry";
+import type { MaestroPreferences } from "../memory/MemoryManager";
+
+export type PlannerMemoryContext = {
+  preferences: MaestroPreferences;
+  recentProjects: string[];
+  recentDecisions: string[];
+};
 
 /**
  * SaaSPlanner
@@ -30,7 +38,8 @@ export class SaaSPlanner {
 
   plan(
     scan: AutopilotScanResult,
-    risks: AutopilotRisk[]
+    risks: AutopilotRisk[],
+    memory?: PlannerMemoryContext
   ): MaestroJob[] {
     const jobs: MaestroJob[] = [];
 
@@ -83,6 +92,24 @@ export class SaaSPlanner {
     const seed = new SeedRunner(); // 🚨 SEM registry
     jobs.push(this.buildJob("seed", seed.getActions()));
 
+    if (this.shouldScheduleGovernanceReview(risks, memory)) {
+      jobs.push(
+        this.buildAdvisoryJob("governance-review", [
+          "Revisar riscos altos e checkpoints humanos antes da execução",
+          "Validar aderência às decisões persistidas na memória do Maestro",
+        ])
+      );
+    }
+
+    if (this.shouldScheduleArchitectureReview(memory)) {
+      jobs.push(
+        this.buildAdvisoryJob("architecture-review", [
+          "Revisar padrões arquiteturais usados recentemente",
+          "Padronizar estrutura antes de ampliar novas features",
+        ])
+      );
+    }
+
     // remove jobs vazios
     return jobs.filter((j) => j.tasks.length > 0);
   }
@@ -107,5 +134,47 @@ export class SaaSPlanner {
       tasks,
     };
   }
-}
 
+  private buildAdvisoryJob(phase: string, tasksText: string[]): MaestroJob {
+    const tasks: MaestroTask[] = tasksText.map((description, index) => ({
+      id: `${phase}:advice-${index + 1}`,
+      status: TaskStatus.PENDING,
+      action: {
+        id: `${phase}-advice-${index + 1}`,
+        name: description,
+        type: "advisory",
+        risk: PhaseRisk.LOW,
+        execute: async () => {},
+      },
+    }));
+
+    return {
+      id: phase,
+      phase,
+      tasks,
+    };
+  }
+
+  private shouldScheduleGovernanceReview(
+    risks: AutopilotRisk[],
+    memory?: PlannerMemoryContext
+  ) {
+    const hasHighRisk = risks.some((risk) => risk.risk === PhaseRisk.HIGH);
+    const prefersEnterprise = memory?.preferences?.codingStyle === "enterprise";
+    const remembersApproval = memory?.recentDecisions.some((decision) =>
+      decision.toLowerCase().includes("approved=")
+    );
+
+    return hasHighRisk || prefersEnterprise || Boolean(remembersApproval);
+  }
+
+  private shouldScheduleArchitectureReview(memory?: PlannerMemoryContext) {
+    if (!memory) return false;
+
+    const recentProjectCount = memory.recentProjects.length;
+    const strictStyle = memory.preferences.codingStyle === "strict";
+    const prefersDefaultDomain = Boolean(memory.preferences.defaultDomain);
+
+    return strictStyle || prefersDefaultDomain || recentProjectCount >= 3;
+  }
+}

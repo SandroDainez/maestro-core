@@ -1,4 +1,4 @@
-import { BaseAgent, AgentContext } from "./BaseAgent";
+import { BaseAgent, AgentExecutionInput, AgentExecutionResult } from "./BaseAgent";
 
 export class FallbackAgent extends BaseAgent {
   name = "Maestro-Orchestrator";
@@ -8,10 +8,18 @@ export class FallbackAgent extends BaseAgent {
     return true; // aceita qualquer coisa
   }
 
-  async execute(task: string, _context: AgentContext) {
-    console.log(`🧠 [${this.name}] analisando tarefa sem agente específico: ${task}`);
+  async execute(input: AgentExecutionInput): Promise<AgentExecutionResult> {
+    console.log(`🧠 [${this.name}] analisando tarefa sem agente específico: ${input.step.title}`);
     await new Promise((r) => setTimeout(r, 800));
     console.log(`🧠 [${this.name}] sugeriu criação de agente especializado.`);
+    return {
+      result: {
+        summary: `Fallback orchestration completed for ${input.step.title}.`,
+        delegated: false,
+        expectedOutput: input.step.expectedOutput,
+      },
+      logs: [`fallback:handled:${input.step.id}`],
+      toolUsageTrace: [],
+    };
   }
 }
-

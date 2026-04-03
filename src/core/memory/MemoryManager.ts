@@ -67,6 +67,10 @@ export class MemoryManager {
     return this.state.preferences;
   }
 
+  getDecisions() {
+    return [...this.state.decisions];
+  }
+
   // -------- Decisions --------
 
   recordDecision(text: string) {
@@ -85,5 +89,8 @@ export class MemoryManager {
       this.persist();
     }
   }
-}
 
+  getRecentProjects() {
+    return [...this.state.recentProjects];
+  }
+}

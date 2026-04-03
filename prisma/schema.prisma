@@ -21,6 +21,8 @@ model User {
   id           String   @id @default(uuid())
   email        String   @unique
   name         String?
+  role         String   @default("Member")
+  status       String   @default("active")
   passwordHash String?
   createdAt    DateTime @default(now())
 
@@ -66,6 +68,24 @@ model PipelineRun {
   analysis   Json?
 
   project Project @relation(fields: [projectId], references: [id])
+  phaseRuns PipelinePhaseRun[]
+}
+
+model PipelinePhaseRun {
+  id         String   @id @default(uuid())
+  runId      String
+  phase      String
+  status     String
+  logs       Json?
+  error      String?
+  details    String?
+  outputs    Json?
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+
+  run PipelineRun @relation(fields: [runId], references: [id])
+
+  @@index([runId])
 }
 
 model ProductAnalysis {
@@ -87,4 +107,17 @@ model ProductAnalysis {
   createdAt           DateTime @default(now())
 
   @@index([projectId])
+}
+
+model DeletionAudit {
+  id          String   @id @default(cuid())
+  projectId   String?
+  projectSlug String?
+  userId      String?
+  userEmail   String?
+  runId       String?
+  targetType  String   @default("project")
+  performedBy String
+  reason      String?
+  deletedAt   DateTime @default(now())
 }

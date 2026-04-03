@@ -1,13 +1,32 @@
 // src/db/run.repository.ts
 
 import { prisma } from "./prisma";
+import type { Prisma } from "@prisma/client";
 
 export class RunRepository {
-  async create(projectId: string) {
+  async create(
+    projectId: string,
+    type = "autopilot",
+    analysis?: Prisma.InputJsonValue
+  ) {
     return prisma.pipelineRun.create({
       data: {
         projectId,
+        type,
         status: "queued",
+        startedAt: new Date(),
+        ...(analysis !== undefined ? { analysis } : {}),
+      },
+    });
+  }
+
+  async finish(runId: string, status = "success", analysis?: Prisma.InputJsonValue) {
+    return prisma.pipelineRun.update({
+      where: { id: runId },
+      data: {
+        status,
+        finishedAt: new Date(),
+        ...(analysis !== undefined ? { analysis } : {}),
       },
     });
   }
@@ -15,23 +34,17 @@ export class RunRepository {
   async finishLatest(projectId: string) {
     const latest = await prisma.pipelineRun.findFirst({
       where: { projectId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { startedAt: "desc" },
     });
 
     if (!latest) return;
 
-    await prisma.pipelineRun.update({
-      where: { id: latest.id },
-      data: {
-        status: "success",
-        endedAt: new Date(),
-      },
-    });
+    await this.finish(latest.id);
   }
 
   async list() {
     return prisma.pipelineRun.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: { startedAt: "desc" },
     });
   }
 
@@ -40,5 +53,16 @@ export class RunRepository {
       where: { id },
     });
   }
-}
 
+  async listRecentByType(type?: string, limit = 10) {
+    return prisma.pipelineRun.findMany({
+      where: type ? { type } : {},
+      include: {
+        project: true,
+        phaseRuns: true,
+      },
+      orderBy: { startedAt: "desc" },
+      take: limit,
+    });
+  }
+}

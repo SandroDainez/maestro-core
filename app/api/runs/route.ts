@@ -1,24 +1,28 @@
 import { prisma } from "../../../src/lib/prisma";
-import { NextResponse } from "next/server";
+import { apiError, apiOk } from "@/src/lib/api";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const type = url.searchParams.get("type") ?? undefined;
+  const rawLimit = parseInt(url.searchParams.get("limit") ?? "", 10);
+  const take = Number.isNaN(rawLimit) ? 10 : Math.min(rawLimit, 50);
+
   try {
     const runs = await prisma.pipelineRun.findMany({
-      orderBy: {
-        startedAt: "desc", // 🔥 corrigido aqui
-      },
-      take: 50,
+      where: type ? { type } : undefined,
+      orderBy: { startedAt: "desc" },
+      take,
       include: {
         project: true,
+        phaseRuns: {
+          orderBy: { startedAt: "asc" },
+        },
       },
     });
 
-    return NextResponse.json(runs);
+    return apiOk({ runs });
   } catch (error) {
     console.error("Erro listando runs:", error);
-    return NextResponse.json(
-      { error: "Erro ao buscar execuções" },
-      { status: 500 }
-    );
+    return apiError("Erro ao buscar execuções", 500);
   }
 }

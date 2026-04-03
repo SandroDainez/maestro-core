@@ -1,9 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  height: 100%;
+:root {
+  font-family: "Space Grotesk", "Manrope", system-ui, sans-serif;
+  color-scheme: dark;
+  --surface: #020617;
+  --surface-muted: #0b1220;
+  --panel: rgba(15, 23, 42, 0.85);
+  --accent: #22d3ee;
+  --accent-strong: #a855f7;
+  --muted: #94a3b8;
+  --card-bg: rgba(15, 23, 42, 0.65);
+  --card-border: rgba(255, 255, 255, 0.08);
 }
 
+html,
+body {
+  min-height: 100%;
+  background: var(--surface);
+  color: #f8fafc;
+}
+
+#root,
+body {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--accent);
+  color: #020617;
+}
+
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 28px;
+  box-shadow: 0 30px 70px rgba(2, 6, 23, 0.75);
+  backdrop-filter: blur(20px);
+}

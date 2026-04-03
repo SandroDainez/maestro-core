@@ -5,14 +5,10 @@ export class ProjectRepository {
     const slug = path.replace(/[^\w]+/g, "-").toLowerCase();
 
     return prisma.project.upsert({
-      where: {
-        tenantId_slug: {
-          tenantId,
-          slug,
-        },
-      },
+      where: { slug },
       update: {
         path,
+        tenantId,
       },
       create: {
         tenantId,
@@ -24,4 +20,3 @@ export class ProjectRepository {
     });
   }
 }
-

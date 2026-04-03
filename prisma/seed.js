@@ -20,8 +20,14 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: { name, passwordHash },
-    create: { email, name, passwordHash },
+    update: { name, passwordHash, role: "admin", status: "active" },
+    create: {
+      email,
+      name,
+      passwordHash,
+      role: "admin",
+      status: "active",
+    },
   });
 
   await prisma.tenantUser.upsert({
@@ -43,12 +49,14 @@ async function main() {
     update: {
       name: projectName,
       path: "/projects/medescala",
+      status: "active",
     },
     create: {
       slug: projectSlug,
       name: projectName,
       path: "/projects/medescala",
       tenantId: tenant.id,
+      status: "active",
     },
   });
 

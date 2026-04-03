@@ -5,6 +5,10 @@ export function ensureDir(dirPath: string) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
+export async function removeDir(dirPath: string) {
+  await fs.promises.rm(dirPath, { recursive: true, force: true });
+}
+
 export function fileExists(filePath: string) {
   try {
     fs.accessSync(filePath, fs.constants.F_OK);
@@ -32,4 +36,3 @@ export function writeText(filePath: string, content: string) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, content, "utf-8");
 }
-

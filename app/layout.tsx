@@ -1,4 +1,5 @@
 import "./globals.css";
+import Providers from "./providers";
 
 export const metadata = {
   title: "Maestro Core",
@@ -13,9 +14,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
-

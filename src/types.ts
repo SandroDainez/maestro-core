@@ -28,7 +28,7 @@ export interface MaestroAction {
   name: string;
   type: string;
   risk: PhaseRisk;
-  execute: () => Promise<void>;
+  execute: (context?: TaskExecutionContext) => Promise<void>;
 }
 
 // -----------------------
@@ -37,6 +37,24 @@ export interface MaestroTask {
   id: string;
   action: MaestroAction;
   status: TaskStatus;
+}
+
+export interface PhaseExecutionDirective {
+  phase: string;
+  ownerAgent: string;
+  executionMode:
+    | "standard"
+    | "architecture_guarded"
+    | "governance_guarded"
+    | "advisory_only";
+  verdict: string;
+  notes: string[];
+}
+
+export interface TaskExecutionContext {
+  phase?: string;
+  ownerAgent?: string;
+  executionMode?: PhaseExecutionDirective["executionMode"];
 }
 
 // -----------------------
@@ -110,4 +128,3 @@ export interface AutopilotScanOutput {
   reportJsonPath: string;
   previews?: PreviewDiff[];
 }
-

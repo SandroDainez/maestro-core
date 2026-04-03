@@ -1,13 +1,50 @@
 // src/cli/cli.ts
 
-import { MaestroEngine } from "../core/MaestroEngine";
-import { MaestroMode } from "../types";
-
+import { MaestroOrchestrator } from "../core/orchestration/MaestroOrchestrator";
 import { RunRepository } from "../db/run.repository";
 
-const engine = new MaestroEngine();
+const orchestrator = new MaestroOrchestrator();
 
 const args = process.argv.slice(2);
+
+function printHumanResult(result: any) {
+  console.log(`\nIntent: ${result.intent}`);
+  console.log(`Projeto: ${result.project.name}`);
+  console.log(`Path: ${result.project.rootPath}`);
+  console.log(`Run dir: ${result.runDir}`);
+  console.log(`Riscos: ${result.risks.length}`);
+  console.log(`Jobs: ${result.jobs.length}`);
+
+  if ("summary" in result) {
+    console.log(
+      `Tasks: ${result.summary.totalTasks} | High risks: ${result.summary.highRisks}`
+    );
+  }
+
+  if ("report" in result) {
+    console.log(`Readiness: ${result.report.readiness}`);
+    console.log(`Recomendacao: ${result.report.recommendation}`);
+  }
+
+  if ("multiAgentReview" in result) {
+    console.log(`Review: ${result.multiAgentReview.summary}`);
+    console.log(`Agentes: ${result.multiAgentReview.participants.join(", ")}`);
+  }
+
+  if ("workflow" in result && Array.isArray(result.workflow)) {
+    console.log("Workflow:");
+    for (const stage of result.workflow) {
+      console.log(`- ${stage.code}: ${stage.status}`);
+    }
+  }
+
+  if ("execution" in result) {
+    console.log(`Execucao: ${result.execution.status}`);
+    if (result.execution.runRecordId) {
+      console.log(`Run persistido: ${result.execution.runRecordId}`);
+    }
+  }
+}
 
 async function main() {
   const cmd = args[0];
@@ -17,6 +54,7 @@ async function main() {
     console.log("Uso:");
     console.log("  scan <path>");
     console.log("  exec <path>");
+    console.log('  ask "<pedido em linguagem humana>" [path]');
     console.log("  runs");
     process.exit(1);
   }
@@ -24,29 +62,26 @@ async function main() {
   try {
     if (cmd === "scan") {
       console.log("🔍 Rodando Autopilot Scan...");
-      const output = await engine.autopilotScan(
-        target,
-        MaestroMode.PLAN
-      );
-
-      console.log("✅ Scan finalizado");
-      console.log(`📄 Relatório: ${output.reportMarkdownPath}`);
+      const result = await orchestrator.scanProject(target);
+      printHumanResult(result);
     }
 
     if (cmd === "exec") {
       console.log("🚀 Rodando Autopilot + Execução...");
+      const result = await orchestrator.runProject(target, true, false, []);
+      printHumanResult(result);
+    }
 
-      const output = await engine.autopilotScan(
-        target,
-        MaestroMode.EXECUTE
-      );
+    if (cmd === "ask") {
+      const request = args[1];
+      const path = args[2] ?? ".";
 
-      await engine.executeJobs(
-        output.project.id,
-        output.jobs
-      );
+      if (!request) {
+        throw new Error('Uso: ask "<pedido em linguagem humana>" [path]');
+      }
 
-      console.log("🎉 Execução persistida no banco!");
+      const result = await orchestrator.handleHumanRequest({ request, path });
+      printHumanResult(result);
     }
 
     if (cmd === "runs") {
@@ -58,9 +93,18 @@ async function main() {
 
       for (const run of runs) {
         console.log(
-          `• ${run.id} | ${run.createdAt.toISOString()} | status=${run.status}`
+          `• ${run.id} | ${run.startedAt.toISOString()} | status=${run.status}`
         );
       }
+    }
+
+    if (!["scan", "exec", "ask", "runs"].includes(cmd)) {
+      const request = args.join(" ");
+      const result = await orchestrator.handleHumanRequest({
+        request,
+        path: ".",
+      });
+      printHumanResult(result);
     }
   } catch (err) {
     console.error("💥 Erro fatal:", err);
@@ -69,4 +113,3 @@ async function main() {
 }
 
 main();
-
