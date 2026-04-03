@@ -6,6 +6,7 @@ import { authorizeAdmin } from "@/src/lib/admin";
 import { getAgentExecutionsRoot } from "@/src/lib/server/paths";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const AGENT_ROOT = getAgentExecutionsRoot();
 

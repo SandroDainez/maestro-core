@@ -3,6 +3,9 @@ import { prisma } from "@/src/lib/prisma";
 import { authorizeAdmin } from "@/src/lib/admin";
 import { apiError, apiOk } from "@/src/lib/api";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const UpdateUserSchema = z.object({
   name: z.string().min(1).optional(),
   email: z.string().email().optional(),

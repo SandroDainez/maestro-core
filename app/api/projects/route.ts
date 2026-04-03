@@ -2,6 +2,9 @@ import { prisma } from "@/src/lib/prisma";
 import { apiOk } from "@/src/lib/api";
 import { authorizeAdmin } from "@/src/lib/admin";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const auth = await authorizeAdmin();
   if (!auth.ok) return auth.response;
